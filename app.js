@@ -38,18 +38,17 @@ app.use(session(sessionParms));
 
 app.use(require("connect-flash")());
 
+const passport = require("passport");
+const passportInit = require("./passport/passportInit");
+passportInit();
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use(require("./middleware/storeLocals"));
 app.get("/", (req, res) => {
   res.render("index");
 });
 app.use("/sessions", require("./routes/sessionRoutes"));
-
-const passport = require("passport");
-const passportInit = require("./passport/passportInit");
-
-passportInit();
-app.use(passport.initialize());
-app.use(passport.session());
 
 // secret word handling
 const secretWordRouter = require("./routes/secretWord");
