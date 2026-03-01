@@ -1,140 +1,143 @@
 const Job = require("../models/Job");
-const parseVErr = require("../utils/parseValidationErrs");
+const parseValidationErr = require("../utils/parseValidationErrs");
 const csrf = require("host-csrf");
 
 const getAllJobs = async (req, res, next) => {
   csrf.getToken(req, res);
 
-  let jobs;
+  const {
+    user: { _id: userId },
+  } = req;
+
   try {
-    jobs = await Job.find({ createdBy: req.user._id });
+    const jobs = await Job.find({ createdBy: userId }).sort("createdAt");
+
+    return res.render("jobs", {
+      jobs,
+      errors: req.flash("error"),
+      info: req.flash("info"),
+    });
   } catch (e) {
     return next(e);
   }
-
-  res.render("jobs", {
-    jobs: jobs,
-    errors: req.flash("error"),
-    info: req.flash("info"),
-  });
 };
 
-const showNewJob = (req, res) => {
+const showNewJob = async (req, res) => {
   csrf.getToken(req, res);
 
-  res.render("job", {
+  return res.render("job", {
     job: null,
     errors: req.flash("error"),
   });
 };
 
 const createJob = async (req, res, next) => {
+  const {
+    body: { company, position, status },
+    user: { _id: userId },
+  } = req;
+
   try {
     await Job.create({
-      company: req.body.company,
-      position: req.body.position,
-      status: req.body.status,
-      salary: req.body.salary,
-      dateApplied: req.body.dateApplied,
-      remote: req.body.remote,
-      skills: req.body.skills,
-      createdBy: req.user._id,
+      company,
+      position,
+      status,
+      createdBy: userId,
     });
   } catch (e) {
-    if (e.constructor.name === "ValidationError") {
-      parseVErr(e, req);
+    if (e?.name === "ValidationError") {
+      parseValidationErr(e, req);
       return res.render("job", {
         job: null,
         errors: req.flash("error"),
       });
-    } else {
-      return next(e);
     }
+    return next(e);
   }
 
   req.flash("info", "Job created successfully.");
-  res.redirect("/jobs");
+  return res.redirect("/jobs");
 };
 
 const showEditJob = async (req, res, next) => {
   csrf.getToken(req, res);
 
-  let job;
+  const {
+    user: { _id: userId },
+    params: { id: jobId },
+  } = req;
+
   try {
-    job = await Job.findOne({
-      _id: req.params.id,
-      createdBy: req.user._id,
+    const job = await Job.findOne({ createdBy: userId, _id: jobId });
+
+    if (!job) {
+      req.flash("error", `Unable to find job with id ${jobId}`);
+      return res.redirect("/jobs");
+    }
+
+    return res.render("job", {
+      job,
+      errors: req.flash("error"),
     });
   } catch (e) {
     return next(e);
   }
-
-  if (!job) {
-    req.flash("error", "Job not found.");
-    return res.redirect("/jobs");
-  }
-
-  res.render("job", {
-    job: job,
-    errors: req.flash("error"),
-  });
 };
 
 const updateJob = async (req, res, next) => {
-  let job;
-  try {
-    job = await Job.findOneAndUpdate(
-      {
-        _id: req.params.id,
-        createdBy: req.user._id,
-      },
-      {
-        company: req.body.company,
-        position: req.body.position,
-        status: req.body.status,
-        salary: req.body.salary,
-        dateApplied: req.body.dateApplied,
-        remote: req.body.remote,
-        skills: req.body.skills,
-      },
-      { runValidators: true },
-    );
-  } catch (e) {
-    if (e.constructor.name === "ValidationError") {
-      parseVErr(e, req);
-      return res.redirect("/jobs/edit/" + req.params.id);
-    } else {
-      return next(e);
-    }
+  const {
+    body: { company, position, status },
+    user: { _id: userId },
+    params: { id: jobId },
+  } = req;
+
+  if (company === "" || position === "") {
+    req.flash("error", "Company and Position cannot be empty.");
+    return res.redirect("/jobs/edit/" + jobId);
   }
 
-  if (!job) {
-    req.flash("error", "Job not found.");
-    return res.redirect("/jobs");
+  try {
+    const job = await Job.findOneAndUpdate(
+      { createdBy: userId, _id: jobId },
+      { company, position, status },
+      { new: true, runValidators: true },
+    );
+
+    if (!job) {
+      req.flash("error", `Unable to find job with id ${jobId}`);
+      return res.redirect("/jobs");
+    }
+  } catch (e) {
+    if (e?.name === "ValidationError") {
+      parseValidationErr(e, req);
+      return res.redirect("/jobs/edit/" + jobId);
+    }
+    return next(e);
   }
 
   req.flash("info", "Job updated successfully.");
-  res.redirect("/jobs");
+  return res.redirect("/jobs");
 };
 
 const deleteJob = async (req, res, next) => {
-  let job;
+  const {
+    user: { _id: userId },
+    params: { id: jobId },
+  } = req;
+
   try {
-    job = await Job.findOneAndDelete({
-      _id: req.params.id,
-      createdBy: req.user._id,
-    });
+    const job = await Job.findOneAndDelete({ createdBy: userId, _id: jobId });
+
+    if (!job) {
+      req.flash("error", `Unable to find job with id ${jobId}`);
+      return res.redirect("/jobs");
+    }
   } catch (e) {
     return next(e);
   }
 
-  if (!job) {
-    req.flash("error", "Job not found.");
-    return res.redirect("/jobs");
-  }
-
   req.flash("info", "Job deleted successfully.");
-  res.redirect("/jobs");
+  return res.redirect("/jobs");
 };
 
 module.exports = {

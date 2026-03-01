@@ -6,9 +6,25 @@ const csrf = require("host-csrf");
 
 const app = express();
 
+const helmet = require("helmet");
+const xss = require("xss-clean");
+const rateLimiter = require("express-rate-limit");
+
 app.set("view engine", "ejs");
 app.use(require("body-parser").urlencoded({ extended: true }));
+
+app.set("trust proxy", 1);
+
 const session = require("express-session");
+
+app.use(helmet());
+app.use(xss());
+app.use(
+  rateLimiter({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Max of 100 requests per windowMs
+  }),
+);
 
 // Session handling
 const MongoDBStore = require("connect-mongodb-session")(session);
@@ -32,8 +48,7 @@ const sessionParms = {
 };
 
 if (app.get("env") === "production") {
-  app.set("trust proxy", 1); // trust first proxy
-  sessionParms.cookie.secure = true; // serve secure cookies
+  sessionParms.cookie.secure = true;
 }
 
 app.use(session(sessionParms));
@@ -63,8 +78,6 @@ const auth = require("./middleware/auth");
 app.use("/secretWord", auth, secretWordRouter);
 
 const jobsRouter = require("./routes/jobs");
-app.use("/jobs", auth, jobs);
-const auth = require("./middleware/auth");
 app.use("/jobs", auth, jobsRouter);
 
 app.use((req, res) => {

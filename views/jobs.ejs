@@ -1,0 +1,63 @@
+<%- include("partials/header") %>
+
+<h2>Jobs List</h2>
+
+<% if (info && info.length) { %>
+  <div class="flash flash-info">
+    <% info.forEach((msg) => { %>
+      <p><%= msg %></p>
+    <% }) %>
+  </div>
+<% } %>
+
+<% if (errors && errors.length) { %>
+  <div class="flash flash-error">
+    <% errors.forEach((msg) => { %>
+      <p><%= msg %></p>
+    <% }) %>
+  </div>
+<% } %>
+
+<p>
+  <a href="/jobs/new">
+    <button type="button">Add New Job</button>
+  </a>
+</p>
+
+<table id="jobs-table" border="1" cellpadding="6" cellspacing="0">
+  <tr id="jobs-table-header">
+    <th>Company</th>
+    <th>Position</th>
+    <th>Status</th>
+    <th colspan="2"></th>
+  </tr>
+
+  <% if (jobs && jobs.length) { %>
+    <% jobs.forEach((job) => { %>
+      <tr>
+        <td><%= job.company %></td>
+        <td><%= job.position %></td>
+        <td><%= job.status %></td>
+
+        <td>
+          <a href="/jobs/edit/<%= job.id %>">
+            <button type="button">edit</button>
+          </a>
+        </td>
+
+        <td>
+          <form method="POST" action="/jobs/delete/<%= job.id %>" style="display: inline">
+            <button type="submit">delete</button>
+            <input type="hidden" name="_csrf" value="<%= _csrf %>" />
+          </form>
+        </td>
+      </tr>
+    <% }) %>
+  <% } else { %>
+    <tr>
+      <td colspan="5">No jobs yet.</td>
+    </tr>
+  <% } %>
+</table>
+
+<%- include("partials/footer") %>
