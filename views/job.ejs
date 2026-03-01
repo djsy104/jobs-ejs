@@ -1,0 +1,59 @@
+<%- include("partials/header") %>
+
+<% const isEdit = job !== null; %>
+<h2><%= isEdit ? "Edit Job" : "Add Job" %></h2>
+
+<% if (errors && errors.length) { %>
+  <div class="flash flash-error">
+    <% errors.forEach((msg) => { %>
+      <p><%= msg %></p>
+    <% }) %>
+  </div>
+<% } %>
+
+<form
+  method="POST"
+  action="<%= isEdit ? ('/jobs/update/' + (job.id || job._id)) : '/jobs' %>"
+>
+  <div>
+    <label for="company">Company</label><br />
+    <input
+      id="company"
+      name="company"
+      type="text"
+      value="<%= isEdit ? job.company : '' %>"
+      maxlength="50"
+      required
+    />
+  </div>
+
+  <div>
+    <label for="position">Position</label><br />
+    <input
+      id="position"
+      name="position"
+      type="text"
+      value="<%= isEdit ? job.position : '' %>"
+      maxlength="100"
+      required
+    />
+  </div>
+
+  <div>
+    <label for="status">Status</label><br />
+    <select id="status" name="status">
+      <option value="pending" <%= (isEdit && job.status === "pending") ? "selected" : "" %>>pending</option>
+      <option value="interview" <%= (isEdit && job.status === "interview") ? "selected" : "" %>>interview</option>
+      <option value="declined" <%= (isEdit && job.status === "declined") ? "selected" : "" %>>declined</option>
+    </select>
+  </div>
+
+  <input type="hidden" name="_csrf" value="<%= _csrf %>" />
+
+  <div style="margin-top: 12px;">
+    <button type="submit"><%= isEdit ? "Update" : "Create" %></button>
+    <a href="/jobs"><button type="button">Cancel</button></a>
+  </div>
+</form>
+
+<%- include("partials/footer") %>
