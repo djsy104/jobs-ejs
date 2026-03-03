@@ -1,7 +1,9 @@
 const User = require("../models/User");
 const parseVErr = require("../utils/parseValidationErrs");
+const csrf = require("host-csrf");
 
 const registerShow = (req, res) => {
+  csrf.getToken(req, res);
   res.render("register");
 };
 
@@ -38,6 +40,7 @@ const logonShow = (req, res) => {
   if (req.user) {
     return res.redirect("/");
   }
+  csrf.getToken(req, res);
   res.render("logon");
 };
 
