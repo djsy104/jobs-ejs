@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "NODE_ENV=test mocha tests/*.js --timeout 5000 --exit"
   },
   "author": "",
   "license": "ISC",
@@ -30,11 +30,20 @@
     "xss-clean": "^0.1.4"
   },
   "devDependencies": {
+    "@faker-js/faker": "^10.3.0",
+    "chai": "^6.2.2",
+    "chai-http": "^5.1.2",
     "eslint": "^10.0.0",
+    "factory-bot": "^6.3.1",
+    "mocha": "^11.7.5",
     "nodemon": "^3.1.11",
-    "prettier": "^3.8.1"
+    "prettier": "^3.8.1",
+    "puppeteer": "^24.39.1"
   },
   "overrides": {
+    "serialize-javascript": "^7.0.4",
+    "diff": "^8.0.3",
+    "yauzl": "^3.2.1",
     "minimatch": "^10.2.1"
   }
 }
